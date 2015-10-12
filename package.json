@@ -1,0 +1,17 @@
+{
+  "name": "producer",
+  "version": "1.0.0",
+  "description": "Calls the walkScore API and pushes the json to kafka",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jeff Adams <jeff@eaiti.com>",
+  "license": "ISC",
+  "dependencies": {
+    "elasticsearch": "^8.2.0",
+    "kafka-node": "^0.2.28",
+    "node-geocoder": "^3.3.0",
+    "randgen": "^0.1.0"
+  }
+}
