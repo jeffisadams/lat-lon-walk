@@ -2,25 +2,18 @@ var kp = require('kafka-node');
 var rp = require('request-promise');
 var rand = require('randgen');
 
-// Google api key to lookup addresses
-var GKey = "";
-var geocoder = require("node-geocoder")('google', 'https', { apiKey: GKey, formatter: 'json' });
+var conf = require('config');
 
-// Walkscore Api key
-var API_BASE = 'http://api.walkscore.com/score';
-var API_KEY = '';
-
-var kafka_zoopkeeper = "localhost:2181";
-
-// Throttling to keep you in compliance with the api policies
-var timeout = 3000;
+// Google api Init
+var geocoder = require("node-geocoder")('google', 'https', { apiKey: conf.google.apiKey, formatter: 'json' });
 
 // Where to center the search
-var center_init = [0,0];
+var center_init = conf.geography.center;
 var center = center_init;
 
-
-var batchSize = 5;
+// Holds an in memory simple queue of what to send.
+// Currently there is no recourse if kafka send fails
+// aside from a log, but something to think about
 var kQueue = [];
 
 // Stochastic properties
@@ -39,10 +32,8 @@ var threshold = 0.5;
 var temp = 0.7;
 
 
-
-
 // Init Kafka
-var client = new kp.Client(kafka_zoopkeeper);
+var client = new kp.Client(conf.kafka.zookeeperHost);
 var producer = new kp.HighLevelProducer(client);
 
 // The Looping code
@@ -74,7 +65,7 @@ producer.on('ready', function() {
 
         iter++;
       });
-  }, timeout);
+  }, conf.performance.throttle);
 });
 
 producer.on('error', function(err) {
@@ -135,13 +126,13 @@ function getAddress(point) {
 
 function getWalkScore(address, latitude, longitude) {
   return rp({
-    uri: API_BASE,
+    uri: conf.walkscore.url,
     qs: {
       format: 'json',
       address: address,
       lat: latitude,
       lon: longitude,
-      wsapikey: API_KEY
+      wsapikey: conf.walkscore.apiKey
     }
   })
 }
@@ -158,10 +149,10 @@ function writeToQueue(data) {
 
 
 function send() {
-  if(kQueue.length == batchSize) {
+  if(kQueue.length == conf.performance.batchSize) {
     console.log("Sending to Kafka");
 
-    var batch = kQueue.splice(0, batchSize);
+    var batch = kQueue.splice(0, conf.performance.batchSize);
     producer.send(
       [{
         topic: 'walkscore',
