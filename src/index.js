@@ -2,7 +2,17 @@ var kp = require('kafka-node');
 var rp = require('request-promise');
 var rand = require('randgen');
 
-var conf = require('config');
+var conf = require('./conf');
+
+console.log("=======================================");
+console.log("             Start Config");
+console.log("=======================================");
+
+console.log(conf);
+
+console.log("=======================================");
+console.log("             End Config");
+console.log("=======================================");
 
 // Google api Init
 var geocoder = require("node-geocoder")('google', 'https', { apiKey: conf.google.apiKey, formatter: 'json' });
@@ -76,12 +86,10 @@ producer.on('error', function(err) {
 
 
 
-function processPoint() {
-  var def = new Promise(function(res, rej) {
 
-  })
+// Util Methods
+function processPoint() {
   var point = getRandomPoint();
-  
   var pointData = {};
 
   return getAddress(point)
@@ -126,13 +134,13 @@ function getAddress(point) {
 
 function getWalkScore(address, latitude, longitude) {
   return rp({
-    uri: conf.walkscore.url,
+    uri: conf.walkScore.url,
     qs: {
       format: 'json',
       address: address,
       lat: latitude,
       lon: longitude,
-      wsapikey: conf.walkscore.apiKey
+      wsapikey: conf.walkScore.apiKey
     }
   })
 }
@@ -142,7 +150,7 @@ function getWalkScore(address, latitude, longitude) {
 
 function writeToQueue(data) {
   console.log("Adding a point");
-  console.log(data.snappedLatitude + "::" + data.snappedLongitude + "\t\t" + data.address);
+  console.log(data.snappedLatitude + "::" + data.snappedLongitude + "\t\t" + data.address + "\t\t" + data.walkScore);
   kQueue.push(JSON.stringify(data));
   return data;
 }
